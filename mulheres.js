@@ -1,35 +1,117 @@
-const express = require("express")
-const router = express.Router()
+const express = require("express") //aqui estou iniciando o express
+const router = express.Router() //aqui estou configurando a primeira parte da rota 
+const cors = require('cors') // aqui estou trazendo o pacote cors que permiti consumir essa api noo front-end 
+const conectaBancoDeDados = require('./bancodeDados') // aqui estou ligando ao arquivo o banco de dados 
 
-const app = express()
-const Porta = 3333
+conectaBancoDeDados() // estou chamando a função que conecta ao banco de dados 
 
+const Mulher = require ('./mulherModel')
+const app = express() //aqui estou iniciando o app
+app.use(express.json())
+app.use(cors())
+const Porta = 3333 //aqui estou criando a porta 
+//GET
+async function mostraMulheres(request, response) {
 
-const mulheres = [
+    try {
+           const mulheresVindasDoBancoDeDados = await Mulher.find()
+            response.json (mulheresVindasDoBancoDeDados)
+    }catch (erro){
+            console.log(erro)
+
+    }
+    
+}
+    
+//post 
+async function criaMulher(request, response) {
+    const novaMulher = new Mulher({        
+        nome: request.body.nome,
+        imagem: request.body.imagem,
+        minibio: request.body.minibio,
+        citacao: request.body.citacao
+    })
+    
+    try {
+        const mulherCriada = await novaMulher.save ()
+        response.status(201).json(mulherCriada)
+    }catch (erro){
+        console.log(erro)
+    }
+
+}
+//PATCH
+async function corrigeMulher(request, response) {
+    try{
+        const mulherEncontrada =await Mulher.findById(request.params.id) 
+        if (request.body.nome) {
+            mulherEncontrada.nome = request.body.nome
+        }
+    
+        if(request.body.minibio) {
+            mulherEncontrada.minibio = request.body.minibio
+    
+        }
+    
+        if(request.body.imagem) {
+            mulherEncontrada = request.body.imagem
+        }
+
+        if (request.body.citação) {
+            mulherEncontrada = request.body.citação
+        }
+        const mulherAtualizadaNoBancoDeDados = await mulherEncontrada.save()
+        response.json(mulherAtualizadaNoBancoDeDados)
+    }catch(erro){
+        console.log(erro)
+    }    
+
+//DELETE
+async function deletaMulher(request, response) {
+   try {
+    await Mulher.findByIdAndDelete(request.params.id)
+    response.json({mensagem: 'Mulher deletada com sucesso'})
+
+   }catch(erro) {
+        console.log(erro)
+   }
+
+    }
+   
+    
+
     {
-        nome: 'Isabella Rufato',
-        imagem: 'https://www.instagram.com/p/CjnrF7XuL5MNyKOneTpmke2QAPWjG7caWTljCY0/',
+        id: '1'
+        nome: 'Isabella Rufato'
+        imagem: 'https://www.instagram.com/p/CjnrF7XuL5MNyKOneTpmke2QAPWjG7caWTljCY0/'
         minibio: 'desenvolvedora'         
-    },
-    {
-        nome:'Fernanda Rufato',
-        imagem: 'https://www.instagram.com/p/CRU5n06g6hVqzir8EdoqnVXljgUGm3BdlvQrNA0/',
+    }
+    {   
+        id: '2'
+        nome: 'Fernanda Rufato'
+        imagem: 'https://www.instagram.com/p/CRU5n06g6hVqzir8EdoqnVXljgUGm3BdlvQrNA0/'
         minibio: 'Desenvolvedora'
-    },
+    }
     {
-        nome: 'Nalla Rufato',
-        imagem: 'https://www.instagram.com/p/CoBA7IDu-ZWsoCRhHAA5A-3s5gOIgX9PETZYXI0/',
+        id: '3'
+        nome: 'Nalla Rufato'
+        imagem: 'https://www.instagram.com/p/CoBA7IDu-ZWsoCRhHAA5A-3s5gOIgX9PETZYXI0/'
         minibio: 'Amorosa da mae'
     }
-]
 
-function mostraMulheres(request, response) {
-    response.json(mulheres)
+        
 }
+
+app.use(router.get('/mulheres', mostraMulheres)) // configurei rota GET /mulheres
+app.use(router.post('/mulheres', criaMulher)) //configurei rota POST/mulheresnode
+app.use(router.patch('/mulheres/:id', corrigeMulher)) //configurei a rota PATCH mulheres
+
+app.use(router.delete('/mulheres/:id, deletaMulher')) //configurei a rota DELETA mulher
+
+//porta
     function mostraPorta ()  {
     console.log("servidor criado e rodando na porta ", Porta)
 
 }
 
-app.use(router.get('/mulheres', mostraMulheres))
-app.listen(Porta, mostraPorta)
+app.listen(Porta, mostraPorta) // servidor ouvindo a portas
